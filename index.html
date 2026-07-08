@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Spider-Man movie?</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      min-height: 100svh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1);
+      background-size: 400% 400%;
+      animation: bgMove 12s ease infinite;
+      font-family: "Poppins", sans-serif;
+      padding: 20px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    @keyframes bgMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .card {
+      width: min(100%, 400px);
+      padding: 36px 26px 40px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 26px;
+      text-align: center;
+      box-shadow:
+        0 30px 80px rgba(0,0,0,0.25),
+        inset 0 0 0 1px rgba(255,255,255,0.4);
+      position: relative;
+      animation: cardIn 1s ease;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: 28px;
+      background: linear-gradient(120deg, #ff4d6d, #ff9a9e, #fbc2eb);
+      z-index: -1;
+      filter: blur(20px);
+      opacity: 0.7;
+    }
+
+    h2 {
+      font-family: "Playfair Display", serif;
+      font-size: clamp(21px, 6vw, 27px);
+      color: #4a1c2f;
+      margin-bottom: 30px;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+
+    .success h2:last-child {
+      margin-bottom: 0;
+    }
+
+    .buttons {
+      position: relative;
+      height: 140px;
+    }
+
+    button {
+      position: absolute;
+      padding: 15px 34px;
+      border-radius: 40px;
+      border: none;
+      font-family: "Poppins", sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, padding 0.25s ease, font-size 0.25s ease, left 0.2s ease, top 0.2s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      white-space: nowrap;
+    }
+
+    button:active { transform: scale(0.94); }
+
+    #yes {
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #ff4d6d, #ff758f);
+      color: #fff;
+      box-shadow: 0 15px 35px rgba(255,77,109,0.55);
+      z-index: 2;
+    }
+
+    #yes:active { transform: translateX(-50%) scale(0.94); }
+
+    #no {
+      left: 50%;
+      top: 70px;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.9);
+      color: #888;
+    }
+
+    .hint {
+      margin-top: 22px;
+      font-size: 13px;
+      color: #6b6b6b;
+      font-style: italic;
+      min-height: 16px;
+    }
+
+    .success {
+      display: none;
+    }
+
+    .success.show {
+      display: block;
+      animation: cardIn 0.5s ease;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body, .card { animation: none !important; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card" id="card">
+    <div id="ask">
+      <h2><span class="name">Shreya</span>, want to go watch Spider-Man with me?</h2>
+
+      <div class="buttons">
+        <button id="yes">Yes, let's go</button>
+        <button id="no">Hard pass</button>
+      </div>
+
+      <div class="hint" id="hint">it's really worth it, I promise</div>
+    </div>
+
+    <div class="success" id="success">
+      <h2>Swinging into your calendar</h2>
+      <h2>I knew you would say yes</h2>
+    </div>
+  </div>
+
+  <audio id="yesSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" preload="auto"></audio>
+
+  <script>
+    const noBtn = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const card = document.getElementById("card");
+    const buttonsBox = document.querySelector(".buttons");
+    const hint = document.getElementById("hint");
+    const askView = document.getElementById("ask");
+    const successView = document.getElementById("success");
+    const yesSound = document.getElementById("yesSound");
+
+    const hints = [
+      "it's really worth it, I promise",
+      "nice try though",
+      "come on, it's Spider-Man",
+      "the button believes in us even if you don't",
+      "ok now you're just testing me"
+    ];
+    let dodgeCount = 0;
+
+    function dodge() {
+      const boxRect = buttonsBox.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      const maxX = boxRect.width - btnRect.width - 8;
+      const maxY = boxRect.height - btnRect.height - 8;
+
+      const newX = Math.max(8, Math.random() * maxX);
+      const newY = Math.max(8, Math.random() * maxY);
+
+      noBtn.style.left = newX + btnRect.width / 2 + "px";
+      noBtn.style.top = newY + "px";
+      noBtn.style.transform = "translateX(-50%)";
+
+      dodgeCount++;
+      hint.textContent = hints[Math.min(dodgeCount - 1, hints.length - 1)];
+
+      // Yes button grows a little each time, capping out so it stays on screen
+      const growth = Math.min(dodgeCount * 2, 16);
+      yesBtn.style.padding = (15 + growth) + "px " + (34 + growth * 1.5) + "px";
+      yesBtn.style.fontSize = (16 + Math.min(dodgeCount, 6)) + "px";
+    }
+
+    // Desktop hover
+    noBtn.addEventListener("mouseenter", dodge);
+
+    // Mobile: dodge on touch/press before a click can land
+    noBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      dodge();
+    }, { passive: false });
+
+    // Fallback so keyboard/assistive users aren't stuck forever
+    noBtn.addEventListener("click", () => {
+      dodge();
+    });
+
+    yesBtn.addEventListener("click", () => {
+      yesSound.play().catch(() => {});
+
+      confetti({
+        particleCount: 220,
+        spread: 110,
+        origin: { y: 0.6 }
+      });
+      setTimeout(() => {
+        confetti({ particleCount: 100, angle: 60, spread: 70, origin: { x: 0 } });
+        confetti({ particleCount: 100, angle: 120, spread: 70, origin: { x: 1 } });
+      }, 300);
+
+      askView.classList.add("hidden");
+      successView.classList.add("show");
+    });
+
+  </script>
+
+</body>
+</html>
